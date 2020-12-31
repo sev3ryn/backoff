@@ -41,6 +41,7 @@ type Config struct {
 // Backoff - generator of backoff intervals
 type Backoff interface {
 	Attempt(num int) time.Duration
+	Sleep(ctx context.Context, attempt int) bool
 }
 
 type exponential struct {
