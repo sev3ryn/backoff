@@ -31,7 +31,7 @@ for i := 0; ; i++ {
 	if err != nil {
 		// You can also use time.Sleep(b.Attempt(i)) if you don't need cancellation
 		if !b.Sleep(ctx, i){
-			return fmt.Errorf("context cancelled, last error: %w", err)
+			return fmt.Errorf("%s while retrying: %w", ctx.Err(), err)
 		}
 		continue
 	}
