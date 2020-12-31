@@ -8,7 +8,7 @@
 
 Boring-simple, goroutine-safe Go(golang) library for exponential backoff with jitter(optional)
 
-## Installationśś
+## Installation
 
 ```
 go get -u github.com/sev3ryn/backoff
@@ -28,11 +28,15 @@ b := backoff.Exponential(backoff.Config{
 
 for i := 0; ; i++ {
 	err := doSmth()
-	if err == nil {
-		break
+	if err != nil {
+		// You can also use time.Sleep(b.Attempt(i)) if you don't need cancellation
+		if !b.Sleep(ctx, i){
+			return fmt.Errorf("context cancelled, last error: %w", err)
+		}
+		continue
 	}
 
-	time.Sleep(b.Attempt(i))
+	break
 }
 
 ```

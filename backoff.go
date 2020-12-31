@@ -2,6 +2,7 @@
 package backoff
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -89,6 +90,12 @@ func (e *exponential) jitterDeviation() float64 {
 	return 1 + e.jitter*(2*rf-1)
 }
 
+// Sleep - context aware time.Sleep. Stops immediatelly when context is cancelled
+// Returns false if context was cancelled while sleeping
+func (e *exponential) Sleep(ctx context.Context, attempt int) bool {
+	return Sleep(ctx, e.Attempt(attempt))
+}
+
 // Attempt - returns backoff duration for Nth retry attempt
 func (e *exponential) Attempt(attempt int) time.Duration {
 
@@ -106,4 +113,27 @@ func (e *exponential) Attempt(attempt int) time.Duration {
 		}
 	}
 	return time.Duration(backoff)
+}
+
+func stopTimer(t *time.Timer) {
+	t.Stop()
+	// drain timer channel - so it can be garbage collected
+	select {
+	case <-t.C:
+	default:
+	}
+}
+
+// Sleep - context aware time.Sleep. Stops immediatelly when context is cancelled
+// Returns false if context was cancelled while sleeping
+func Sleep(ctx context.Context, d time.Duration) bool {
+	t := time.NewTimer(d)
+	defer stopTimer(t)
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-t.C:
+		return true
+	}
 }
